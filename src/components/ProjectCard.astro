@@ -1,0 +1,29 @@
+---
+import type { CollectionEntry } from "astro:content";
+import TuiButton from "./TuiButton.astro";
+
+export interface Props {
+  project: CollectionEntry<"projects">;
+}
+
+const { project } = Astro.props;
+const { title, description, links } = project.data;
+---
+
+<div class="bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden flex flex-col h-full justify-between">
+  <span
+    class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold"
+  >
+    PROJECT_{String(project.id).toUpperCase().replace(/-/g, "_")}
+  </span>
+  <div>
+    <h2 class="font-headline-md text-primary mb-3">{title}</h2>
+    <p class="text-body-md text-on-surface-variant mb-6">{description}</p>
+  </div>
+  <div class="flex gap-4">
+    {links.source && (
+      <TuiButton href={links.source}>[ SOURCE ]</TuiButton>
+    )}
+    {links.demo && <TuiButton href={links.demo}>[ DEMO ]</TuiButton>}
+  </div>
+</div>

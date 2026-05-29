@@ -1,0 +1,100 @@
+---
+export interface Props {
+  activePage?: "home" | "projects" | "blog" | "about";
+}
+
+const { activePage = "home" } = Astro.props;
+
+const pathMap: Record<string, string> = {
+  home: "./home",
+  projects: "./projects",
+  blog: "./blog",
+  about: "./about",
+};
+---
+
+<div
+  class="status-bar flex items-center h-6 text-[11px] bg-surface-container-high text-on-surface border-t border-primary/30 select-none shrink-0"
+>
+  <!-- Mode indicator -->
+  <span
+    class="flex items-center h-full px-2 bg-primary text-on-primary-container font-bold tracking-wider"
+  >
+    NORMAL
+  </span>
+
+  <!-- Path -->
+  <span
+    class="flex items-center h-full px-2 border-l border-primary/30 gap-1 whitespace-nowrap"
+  >
+    <span class="opacity-70">ROOT@PORTFOLIO</span>
+    <span>:</span>
+    <span>~</span>
+    <span class="opacity-70">{pathMap[activePage]}</span>
+  </span>
+
+  <!-- Spacer -->
+  <span class="flex-1 min-w-0"></span>
+
+  <!-- Git branch -->
+  <span
+    class="flex items-center h-full px-2 border-l border-primary/30 gap-1 whitespace-nowrap"
+  >
+    <span class="opacity-70">git:(</span>
+    <span>main</span>
+    <span class="opacity-70">)</span>
+  </span>
+
+  <!-- Encoding -->
+  <span
+    class="flex items-center h-full px-2 border-l border-primary/30 whitespace-nowrap"
+  >
+    utf-8
+  </span>
+
+  <!-- Clock -->
+  <span
+    id="status-clock"
+    class="flex items-center h-full px-2 border-l border-primary/30 whitespace-nowrap"
+  >
+    00:00:00
+  </span>
+
+  <!-- Scroll position -->
+  <span
+    id="status-scroll"
+    class="flex items-center h-full px-2 border-l border-primary/30 whitespace-nowrap"
+  >
+    --
+  </span>
+</div>
+
+<script>
+  function updateClock() {
+    const el = document.getElementById("status-clock");
+    if (el) {
+      el.textContent = new Date().toTimeString().slice(0, 8);
+    }
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  function updateScroll() {
+    const el = document.getElementById("status-scroll");
+    if (el) {
+      const main = document.querySelector("main");
+      if (main) {
+        const pct =
+          main.scrollHeight > main.clientHeight
+            ? Math.round(
+                (main.scrollTop / (main.scrollHeight - main.clientHeight)) * 100
+              )
+            : 0;
+        el.textContent = pct + "%";
+      }
+    }
+  }
+  updateScroll();
+  const main = document.querySelector("main");
+  if (main) main.addEventListener("scroll", updateScroll);
+</script>

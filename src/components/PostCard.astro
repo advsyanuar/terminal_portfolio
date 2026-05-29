@@ -1,0 +1,23 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  post: CollectionEntry<"blog">;
+}
+
+const { post } = Astro.props;
+const { title, date, description } = post.data;
+---
+
+<a
+  href={"/blog/" + post.slug}
+  class="block group border-l-2 border-primary/10 hover:border-primary pl-4 py-1 transition-all"
+>
+  <div class="text-[10px] text-on-surface-variant">
+    {date.toISOString().slice(0, 10)}
+  </div>
+  <div class="text-body-md group-hover:text-primary">{title}</div>
+  {description && (
+    <div class="text-code-sm text-on-surface-variant mt-1">{description}</div>
+  )}
+</a>

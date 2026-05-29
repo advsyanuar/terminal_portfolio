@@ -1,0 +1,19 @@
+---
+export interface Props {
+  label: string;
+  class?: string;
+}
+
+const { label } = Astro.props;
+---
+
+<div
+  class="bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden {Astro.props.class}"
+>
+  <span
+    class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold"
+  >
+    {label}
+  </span>
+  <slot />
+</div>

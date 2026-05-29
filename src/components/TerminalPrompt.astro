@@ -1,0 +1,14 @@
+---
+export interface Props {
+  prompt?: string;
+  command?: string;
+}
+
+const { prompt = "root@archive:~$", command } = Astro.props;
+---
+
+<div class="flex gap-2 font-code-sm text-primary">
+  <span class="opacity-50">{prompt}</span>
+  {command && <span>{command}</span>}
+  <div class="w-2 h-4 bg-primary animate-pulse"></div>
+</div>

@@ -1,0 +1,46 @@
+---
+title: "EBPF Networking Hooks — A Practical Walkthrough"
+date: 2024-11-15
+description: "Exploring eBPF hooks for network observability and packet filtering."
+tags: ["ebpf", "linux", "networking", "systems"]
+draft: false
+---
+
+import { Code } from "astro/components";
+
+## Overview
+
+eBPF (extended Berkeley Packet Filter) allows running sandboxed programs in the kernel without modifying kernel source code or loading modules.
+
+### Key hooks for networking
+
+| Hook | Trigger | Use case |
+|---|---|---|
+| `XDP` | Earliest packet stage | DDoS mitigation, load balancing |
+| `TC` | Traffic control ingress/egress | QoS, packet scheduling |
+| `sk_skb` | Socket-level | Per-connection filtering |
+
+### Minimal XDP example
+
+```c
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+
+SEC("xdp")
+int drop_all(struct xdp_md *ctx) {
+    return XDP_DROP;
+}
+
+char _license[] SEC("license") = "GPL";
+```
+
+Compile with:
+
+```bash
+clang -O2 -target bpf -c xdp_drop.c -o xdp_drop.o
+ip link set dev eth0 xdp obj xdp_drop.o
+```
+
+### Why this matters
+
+eBPF turns the kernel into a programmable platform. For observability alone, it replaces the need for kernel modules and taps into every packet, syscall, and function call with minimal overhead.

@@ -1,0 +1,103 @@
+---
+import Layout from "../layouts/Layout.astro";
+import NeofetchHero from "../components/NeofetchHero.astro";
+import PostCard from "../components/PostCard.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).filter((p) => !p.data.draft).slice(0, 3);
+const projects = (await getCollection("projects")).filter((p) => p.data.featured).slice(0, 1);
+---
+
+<Layout title="ROOT@PORTFOLIO:~" activePage="home">
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <!-- Neofetch Hero -->
+    <div class="md:col-span-12">
+      <NeofetchHero />
+    </div>
+
+    <!-- Featured Project -->
+    {
+      projects.length > 0 && (
+        <div class="md:col-span-6 lg:col-span-6 bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden flex flex-col h-full justify-between">
+          <span class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold">LATEST_PROJECT</span>
+          <div>
+            <h2 class="font-headline-md text-primary mb-3">{projects[0].data.title}</h2>
+            <p class="text-body-md text-on-surface-variant mb-6">{projects[0].data.description}</p>
+          </div>
+          <div class="flex gap-4">
+            {projects[0].data.links.source && (
+              <a href={projects[0].data.links.source} class="flex-1 border border-primary py-2 text-label-caps text-center hover:bg-primary hover:text-on-primary-container transition-colors">
+                [ SOURCE ]
+              </a>
+            )}
+            {projects[0].data.links.demo && (
+              <a href={projects[0].data.links.demo} class="flex-1 border border-primary py-2 text-label-caps text-center hover:bg-primary hover:text-on-primary-container transition-colors">
+                [ DEMO ]
+              </a>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    <!-- Latest Posts -->
+    <div class="md:col-span-12 lg:col-span-6 bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden">
+      <span class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold">LATEST_POSTS</span>
+      <h3 class="font-label-caps text-primary mb-6 flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">rss_feed</span>
+        INTEL_FEED
+      </h3>
+      <div class="space-y-4">
+        {
+          posts.map((post) => <PostCard post={post} />)
+        }
+        {posts.length === 0 && (
+          <p class="text-on-surface-variant text-code-sm italic">No posts yet.</p>
+        )}
+      </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="md:col-span-12 bento-cell border border-[#1e3a8a] bg-[#0f172a] p-0 h-[300px] flex flex-col relative overflow-hidden">
+      <span class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold z-10">TERMINAL_EMULATOR</span>
+      <div class="bg-surface-container-low p-2 border-b border-primary/20 flex items-center gap-2 px-4">
+        <div class="w-2.5 h-2.5 rounded-full bg-error/50"></div>
+        <div class="w-2.5 h-2.5 rounded-full bg-secondary/50"></div>
+        <div class="w-2.5 h-2.5 rounded-full bg-primary/50"></div>
+        <span class="text-[10px] ml-4 text-on-surface-variant opacity-60">root@archive:~/projects/pulse</span>
+      </div>
+      <div class="flex-1 p-6 font-code-sm text-primary overflow-y-auto space-y-2">
+        <div class="flex gap-2">
+          <span class="opacity-50">root@archive:~$</span>
+          <span>ls -la ./projects</span>
+        </div>
+        <div class="grid grid-cols-4 opacity-70 gap-2">
+          <span>drwxr-xr-x</span>
+          <span>root</span>
+          <span>4096</span>
+          <span>cyber_pulse/</span>
+          <span>drwxr-xr-x</span>
+          <span>root</span>
+          <span>4096</span>
+          <span>neural_link/</span>
+          <span>-rw-r--r--</span>
+          <span>root</span>
+          <span>1242</span>
+          <span>README.md</span>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <span class="opacity-50">root@archive:~$</span>
+          <span>./bin/monitor --live</span>
+        </div>
+        <div class="text-on-surface-variant italic">
+          [ SYSTEM ] Monitoring interface initialized...<br />
+          [ SYSTEM ] Listening on port 8080...
+        </div>
+        <div class="flex gap-2 items-center">
+          <span class="opacity-50">root@archive:~$</span>
+          <div class="w-2 h-4 bg-primary animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

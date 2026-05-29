@@ -1,0 +1,22 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).filter((p) => !p.data.draft);
+---
+
+<Layout title="MAN_BLOG — ROOT@PORTFOLIO" activePage="blog">
+  <div class="bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden">
+    <span class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold">BLOG_INDEX</span>
+    <h1 class="font-headline-lg text-primary mb-8">INTEL_FEED</h1>
+
+    {posts.length === 0 && (
+      <p class="text-on-surface-variant text-body-md italic">No posts yet.</p>
+    )}
+
+    <div class="space-y-6">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+  </div>
+</Layout>

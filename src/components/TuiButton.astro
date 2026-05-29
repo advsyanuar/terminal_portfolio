@@ -1,0 +1,22 @@
+---
+export interface Props {
+  href?: string;
+  variant?: "primary" | "secondary";
+}
+
+const { href, variant = "primary" } = Astro.props;
+const cls =
+  "inline-block border border-primary py-2 px-4 text-label-caps hover:bg-primary hover:text-on-primary-container transition-colors text-center";
+---
+
+{
+  href ? (
+    <a href={href} class={cls}>
+      <slot />
+    </a>
+  ) : (
+    <button class={cls}>
+      <slot />
+    </button>
+  )
+}

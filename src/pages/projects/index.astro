@@ -1,0 +1,22 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import { getCollection } from "astro:content";
+
+const projects = await getCollection("projects");
+---
+
+<Layout title="PROJECTS — ROOT@PORTFOLIO" activePage="projects">
+  <div class="bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden">
+    <span class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold">PROJECTS_INDEX</span>
+    <h1 class="font-headline-lg text-primary mb-8">PROJECTS.EXE</h1>
+
+    {projects.length === 0 && (
+      <p class="text-on-surface-variant text-body-md italic">No projects yet.</p>
+    )}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </div>
+</Layout>

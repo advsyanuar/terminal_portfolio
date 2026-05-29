@@ -1,0 +1,47 @@
+---
+import "../styles/global.css";
+import CrtEffect from "../components/CrtEffect.astro";
+import Sidebar from "../components/Sidebar.astro";
+import StatusBar from "../components/StatusBar.astro";
+
+export interface Props {
+  title?: string;
+  activePage?: "home" | "projects" | "blog" | "about";
+}
+
+const { title = "ROOT@PORTFOLIO:~", activePage } = Astro.props;
+---
+
+<!doctype html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body
+    class="bg-background text-primary selection:bg-primary-container selection:text-on-primary-container overflow-hidden"
+  >
+    <CrtEffect />
+    <div class="flex h-screen">
+      <Sidebar activePage={activePage} />
+      <div class="flex flex-col flex-1 min-w-0">
+        <main class="flex-1 overflow-y-auto p-4 md:p-8">
+          <div class="max-w-[1400px] mx-auto">
+            <slot />
+          </div>
+        </main>
+        <StatusBar activePage={activePage} />
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+---
+export interface Props {
+  label: string;
+  percent: number;
+}
+
+const { label, percent } = Astro.props;
+---
+
+<div class="space-y-1">
+  <div class="flex justify-between text-code-sm">
+    <span class="text-primary font-bold">{label}</span>
+    <span class="text-on-surface-variant">{percent}%</span>
+  </div>
+  <div class="w-full bg-surface-container h-1.5 border border-primary/20">
+<div
+  class="bg-primary h-full transition-all"
+  style={{ width: `${percent}%` }}
+></div>
+  </div>
+</div>

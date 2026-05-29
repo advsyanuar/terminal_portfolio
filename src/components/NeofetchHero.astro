@@ -1,0 +1,118 @@
+---
+const info = [
+  { label: "Website", value: "Terminal Portfolio v0.1.0" },
+  { label: "Stack", value: "Astro | TypeScript | TailwindCSS" },
+  { label: "OS & Tools", value: "Arch Linux | Neovim | Tmux | Alacritty" },
+  {
+    label: "Repo",
+    value: "github.com/manonthemoon/terminal-portfolio",
+  },
+  { label: "Host", value: "GitHub Pages" },
+  { label: "Country", value: "ID" },
+  { label: "Timezone", value: "Asia/Jakarta" },
+];
+
+const palette = [
+  { name: "primary", hex: "#3b82f6" },
+  { name: "secondary", hex: "#ffd393" },
+  { name: "on-surface", hex: "#e3e2e2" },
+  { name: "on-primary", hex: "#ffffff" },
+  { name: "error", hex: "#ffb4ab" },
+];
+---
+
+<div
+  class="bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden flex flex-col min-h-[360px]"
+>
+  <span
+    class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold"
+  >
+    NEOFETCH
+  </span>
+
+  <!-- Main content row -->
+  <div
+    class="flex flex-col md:flex-row gap-6 md:gap-10 items-start flex-1 pt-2"
+  >
+    <!-- ASCII circuit art -->
+    <pre class="shrink-0 text-[8px] sm:text-[10px] md:text-[12px] leading-tight text-primary-fixed-dim">
+     ┌───────────────┐
+     │  ╔══════════╗  │
+     │  ║ ═══ ═══ ═║  │
+     │  ║ ═══ ═══ ═║  │
+     │  ║ ═══ ═══ ═║  │
+     │  ╚══════════╝  │
+     └───┬───────┬───┘
+         │       │
+     ┌───┴───────┴───┐
+     │  ╔══════════╗  │
+     │  ║ ═══ ═══ ═║  │
+     │  ║ ═══ ═══ ═║  │
+     │  ╚══════════╝  │
+     └───────────────┘
+     </pre>
+
+    <!-- Info fields -->
+    <div class="text-body-md">
+      <div class="mb-2">
+        <span class="text-primary font-bold">root</span>
+        <span class="text-on-surface-variant">@</span>
+        <span class="text-primary font-bold">manonthemoon.github.io</span>
+      </div>
+      <div
+        class="border-b border-primary/30 mb-3 w-full max-w-[50ch]"
+      ></div>
+
+      <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+        {info.map(({ label, value }) => (
+          <>
+            <span class="text-primary whitespace-nowrap">{label}</span>
+            <span class="text-on-surface-variant">{value}</span>
+          </>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Color palette strip -->
+  <div class="flex items-center w-full justify-between border-t border-primary-fixed-dim/20 pt-4 mt-4">
+    <div class="flex flex-wrap">
+      {palette.map(({ name, hex }) => (
+        <div class="text-left">
+          <span
+            class="block w-6 h-6 md:w-6 md:h-6 border border-primary/20"
+            style={{ backgroundColor: hex }}
+          >
+          </span>
+          <span class="block hidden text-[9px] text-on-surface-variant">{hex}</span>
+        </div>
+      ))}
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="w-5">
+        <svg role="img" fill="#3b82f6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <title>Arch Linux</title>
+          <path class="bg-cyan-300" d="M11.39.605C10.376 3.092 9.764 4.72 8.635 7.132c.693.734 1.543 1.589 2.923 2.554-1.484-.61-2.496-1.224-3.252-1.86C6.86 10.842 4.596 15.138 0 23.395c3.612-2.085 6.412-3.37 9.021-3.862a6.61 6.61 0 01-.171-1.547l.003-.115c.058-2.315 1.261-4.095 2.687-3.973 1.426.12 2.534 2.096 2.478 4.409a6.52 6.52 0 01-.146 1.243c2.58.505 5.352 1.787 8.914 3.844-.702-1.293-1.33-2.459-1.929-3.57-.943-.73-1.926-1.682-3.933-2.713 1.38.359 2.367.772 3.137 1.234-6.09-11.334-6.582-12.84-8.67-17.74zM22.898 21.36v-.623h-.234v-.084h.562v.084h-.234v.623h.331v-.707h.142l.167.5.034.107a2.26 2.26 0 01.038-.114l.17-.493H24v.707h-.091v-.593l-.206.593h-.084l-.205-.602v.602h-.091"/>
+        </svg>
+      </div>
+      <div class="w-5">
+        <svg role="img" fill="#57A143" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <title>Neovim</title>
+          <path d="M2.214 4.954v13.615L7.655 24V10.314L3.312 3.845 2.214 4.954zm4.999 17.98l-4.557-4.548V5.136l.59-.596 3.967 5.908v12.485zm14.573-4.457l-.862.937-4.24-6.376V0l5.068 5.092.034 13.385zM7.431.001l12.998 19.835-3.637 3.637L3.787 3.683 7.43 0z"/>
+        </svg>
+      </div>
+      <div class="w-5">
+        <svg role="img" fill="#1BB91F" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <title>tmux</title>
+          <path d="M24 2.251V10.5H12.45V0h9.3A2.251 2.251 0 0 1 24 2.251zM12.45 11.4H24v10.5h-.008A2.25 2.25 0 0 1 21.75 24H2.25a2.247 2.247 0 0 1-2.242-2.1H0V2.251A2.251 2.251 0 0 1 2.25 0h9.3v21.6h.9V11.4zm11.242 10.5H.308a1.948 1.948 0 0 0 1.942 1.8h19.5a1.95 1.95 0 0 0 1.942-1.8z"/>
+        </svg>
+      </div>
+      <div class="w-5">
+        <svg role="img" fill="#F46D01" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <title>Alacritty</title>
+          <path d="m10.065 0-8.57 21.269h3.595l6.91-16.244 6.91 16.244h3.594l-8.57-21.269zm1.935 9.935c-0.76666 1.8547-1.5334 3.7094-2.298 5.565 1.475 4.54 1.475 4.54 2.298 8.5 0.823-3.96 0.823-3.96 2.297-8.5-0.76637-1.8547-1.5315-3.7099-2.297-5.565z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+---
+export interface Props {
+  activePage?: "home" | "projects" | "blog" | "about";
+}
+
+const { activePage } = Astro.props;
+
+const links = [
+  { label: "HOME.SH", slug: "home", href: "/", fkey: "F1" },
+  { label: "PROJECTS.EXE", slug: "projects", href: "/projects", fkey: "F2" },
+  { label: "MAN_BLOG", slug: "blog", href: "/blog", fkey: "F3" },
+  { label: "FINGER_ABOUT", slug: "about", href: "/about", fkey: "F4" },
+];
+---
+
+<aside
+  class="w-16 md:w-64 border-r border-primary/30 flex flex-col bg-surface-container-low z-50 h-screen sticky top-0"
+>
+<div class="p-4 md:p-6 border-b border-primary/30">
+    <div class="flex items-center gap-2">
+      <span class="text-primary font-bold text-headline-md">$</span>
+      <div class="w-2 h-5 bg-primary animate-pulse"></div>
+    </div>
+    <p class="hidden md:block text-[10px] mt-2 text-on-surface-variant tracking-tighter">
+      VFS_MOUNTED_OK
+    </p>
+  </div>
+
+  <nav class="flex-1 flex flex-col gap-2 p-2 md:p-4">
+    {links.map(({ label, slug, href, fkey }) => (
+      <a
+        href={href}
+        class:list={[
+          "nav-link px-4 py-3 font-label-caps whitespace-nowrap flex items-center gap-3 border transition-all",
+          activePage === slug
+            ? "border-primary/50 bg-primary text-[#ffffff]"
+            : "border-transparent hover:border-primary/50 hover:bg-primary/10",
+        ]}
+      >
+        <span class="text-[10px] opacity-70">{fkey}</span>
+        <span class="hidden md:inline">{label}</span>
+      </a>
+    ))}
+  </nav>
+
+</aside>
