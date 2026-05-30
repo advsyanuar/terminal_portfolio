@@ -17,35 +17,167 @@ const { Content } = await post.render();
 
 <Layout title={title + " — ROOT@PORTFOLIO"} activePage="blog">
   <article class="w-full">
-    <div class="mb-8">
-      <a href="/blog" class="text-code-sm text-on-surface-variant hover:text-primary">&larr; BACK TO INDEX</a>
+    <!-- Breadcrumb -->
+    <div class="mb-6 flex items-center gap-2 text-code-sm">
+      <a
+        href="/blog"
+        class="text-on-surface-variant hover:text-primary transition-colors"
+        >&larr; BACK</a
+      >
+      <span class="text-on-surface-variant/30">/</span>
+      <span class="text-on-surface-variant">~</span>
+      <span class="text-on-surface-variant/30">/</span>
+      <span class="text-on-surface-variant">blog</span>
+      <span class="text-on-surface-variant/30">/</span>
+      <span class="text-primary">{post.slug}</span>
     </div>
 
-    <div class="bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden">
-      <span class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold">BLOG_POST</span>
-      <h1 class="font-headline-lg text-primary mb-2">{title}</h1>
-      <div class="flex flex-wrap items-center gap-4 text-code-sm text-on-surface-variant mb-6">
-        <time datetime={date.toISOString()}>{date.toISOString().slice(0, 10)}</time>
-        {tags.length > 0 && (
-          <div class="flex gap-2">
-            {tags.map((tag) => (
-              <span class="border border-primary/30 px-2 py-0.5 text-[10px]">{tag}</span>
-            ))}
-          </div>
+    <!-- Two-column layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-6">
+      <!-- Left: main content -->
+      <div
+        class="bento-cell border border-[#1e3a8a] bg-[#0f172a] p-6 relative overflow-hidden min-w-0"
+      >
+        <span
+          class="absolute top-0 right-0 bg-primary text-[#ffffff] text-[10px] px-1.5 py-0.5 font-bold"
+          >BLOG_POST</span
+        >
+        <h1 class="font-headline-lg text-primary mb-2">{title}</h1>
+        <div
+          class="flex flex-wrap items-center gap-4 text-code-sm text-on-surface-variant mb-6"
+        >
+          <time datetime={date.toISOString()}
+            >{date.toISOString().slice(0, 10)}</time
+          >
+          {tags.length > 0 && (
+            <div class="flex gap-2">
+              {tags.map((tag) => (
+                <span
+                  class="border border-primary/30 px-2 py-0.5 text-[10px]"
+                  >{tag}</span
+                >
+              ))}
+            </div>
+          )}
+        </div>
+        {description && (
+          <p
+            class="text-body-md text-on-surface-variant mb-8 border-l-2 border-primary/30 pl-4"
+          >
+            {description}
+          </p>
         )}
-      </div>
-      {description && (
-        <p class="text-body-md text-on-surface-variant mb-8 border-l-2 border-primary/30 pl-4">
-          {description}
-        </p>
-      )}
 
-      <div class="prose-custom">
-        <Content />
+        <div class="prose-custom">
+          <Content />
+        </div>
       </div>
+
+      <!-- Right: Table of Contents -->
+      <aside class="hidden lg:block">
+        <div
+          class="sticky top-12 border border-primary/30 bg-surface-container-low p-4"
+        >
+          <p
+            class="text-[10px] text-on-surface-variant mb-3 font-bold tracking-wider"
+          >
+            TABLE_OF_CONTENTS
+          </p>
+          <nav id="toc-nav" class="max-h-[calc(100vh-120px)] overflow-y-auto">
+            <!-- Populated by JS -->
+          </nav>
+        </div>
+      </aside>
     </div>
   </article>
 </Layout>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const content = document.querySelector(".prose-custom");
+    const tocNav = document.getElementById("toc-nav");
+    if (!content || !tocNav) return;
+
+    const headings = content.querySelectorAll("h2, h3");
+    if (headings.length === 0) {
+      const aside = tocNav.closest("aside");
+      if (aside) aside.style.display = "none";
+      return;
+    }
+
+    const list = document.createElement("ul");
+    list.className = "space-y-0.5";
+
+    const headingList = [];
+    const linkMap = new WeakMap();
+
+    headings.forEach((h) => {
+      const level = h.tagName.toLowerCase();
+      const text = h.textContent.trim();
+
+      if (!h.id) {
+        h.id =
+          text
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "") || "section";
+      }
+
+      const li = document.createElement("li");
+      if (level === "h3") li.className = "ml-3";
+
+      const a = document.createElement("a");
+      a.href = "#" + h.id;
+      a.className =
+        "block text-[11px] py-1 text-on-surface-variant hover:text-primary transition-colors border-l-2 border-transparent hover:border-primary/50 pl-2";
+      a.textContent = text;
+
+      li.appendChild(a);
+      list.appendChild(li);
+      headingList.push(h);
+      linkMap.set(h, a);
+    });
+
+    tocNav.appendChild(list);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const link = linkMap.get(entry.target);
+          if (!link) return;
+
+          if (entry.isIntersecting) {
+            tocNav.querySelectorAll("a").forEach((a) => {
+              a.classList.remove("text-primary", "border-primary");
+              a.classList.add(
+                "text-on-surface-variant",
+                "border-transparent"
+              );
+            });
+            link.classList.remove(
+              "text-on-surface-variant",
+              "border-transparent"
+            );
+            link.classList.add("text-primary", "border-primary");
+          }
+        });
+      },
+      { rootMargin: "-80px 0px -65% 0px", threshold: 0 }
+    );
+
+    headingList.forEach((h) => observer.observe(h));
+
+    tocNav.addEventListener("click", (e) => {
+      const link = e.target.closest("a");
+      if (!link) return;
+      e.preventDefault();
+      const target = document.getElementById(link.getAttribute("href").slice(1));
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+  });
+</script>
 
 <style is:global>
   .prose-custom {
