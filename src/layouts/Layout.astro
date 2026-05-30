@@ -3,13 +3,17 @@ import "../styles/global.css";
 import CrtEffect from "../components/CrtEffect.astro";
 import Sidebar from "../components/Sidebar.astro";
 import StatusBar from "../components/StatusBar.astro";
+import StickyHeader from "../components/StickyHeader.astro";
 
 export interface Props {
   title?: string;
-  activePage?: "home" | "projects" | "blog" | "about";
+  activePage?: "home" | "projects" | "blog" | "about" | "sudo";
+  headerPostCount?: number;
+  headerProjectCount?: number;
+  fullContent?: boolean;
 }
 
-const { title = "ROOT@PORTFOLIO:~", activePage } = Astro.props;
+const { title = "ROOT@PORTFOLIO:~", activePage, headerPostCount, headerProjectCount, fullContent } = Astro.props;
 ---
 
 <!doctype html>
@@ -35,10 +39,19 @@ const { title = "ROOT@PORTFOLIO:~", activePage } = Astro.props;
     <div class="flex h-screen">
       <Sidebar activePage={activePage} />
       <div class="flex flex-col flex-1 min-w-0">
-        <main class="flex-1 overflow-y-auto p-4 md:p-8">
-          <div class="max-w-[1400px] mx-auto">
-            <slot />
-          </div>
+        <main class:list={["flex-1 overflow-y-auto", fullContent ? "flex flex-col" : ""]}>
+          <StickyHeader activePage={activePage} postCount={headerPostCount} projectCount={headerProjectCount} />
+          {fullContent ? (
+            <div class="flex-1 min-h-0">
+              <slot />
+            </div>
+          ) : (
+            <div class="p-4 md:p-8">
+              <div class="max-w-[1400px] mx-auto">
+                <slot />
+              </div>
+            </div>
+          )}
         </main>
         <StatusBar activePage={activePage} />
       </div>

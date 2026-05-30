@@ -16,7 +16,21 @@ const projects = await getCollection("projects");
     )}
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {projects.map((project) => <ProjectCard project={project} />)}
+      {projects.map((project) => (
+        <div
+          class="search-item"
+          data-title={project.data.title}
+          data-description={project.data.description}
+          data-tags={(project.data.techStack || []).join(" ")}
+        >
+          <ProjectCard project={project} />
+        </div>
+      ))}
     </div>
+
+    <div
+      id="search-no-results"
+      class="hidden text-on-surface-variant text-code-sm italic"
+    ></div>
   </div>
 </Layout>

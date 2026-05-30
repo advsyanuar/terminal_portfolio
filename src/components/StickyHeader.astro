@@ -1,0 +1,297 @@
+---
+export interface Props {
+  activePage?: "home" | "projects" | "blog" | "about" | "sudo";
+  postCount?: number;
+  projectCount?: number;
+}
+
+const { activePage, postCount = 0, projectCount = 0 } = Astro.props;
+const isSudo = activePage === "sudo";
+---
+
+<header
+  id="sticky-header"
+  class="sticky top-0 z-40 h-10 flex items-center border-b border-primary/30 bg-surface-container-low px-4 gap-3 shrink-0"
+>
+  {isSudo ? (
+    <div class="flex items-center gap-4 flex-1 min-w-0">
+      <div
+        class="flex items-center gap-2 text-[11px] text-on-surface-variant"
+      >
+        <span class="text-primary font-bold">AUTH:</span>
+        <span>root@portfolio</span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <div class="flex items-center gap-1.5">
+          <span class="text-primary font-bold">POSTS:</span>
+          <span class="text-on-surface-variant">{postCount}</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-primary font-bold">PROJECTS:</span>
+          <span class="text-on-surface-variant">{projectCount}</span>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <>
+      <div
+        id="terminal-trigger"
+        class="flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:bg-primary/5 px-2 -mx-2 h-full transition-colors select-none"
+      >
+        <span
+          class="text-[11px] text-on-surface-variant whitespace-nowrap"
+          >guest@archive:~$</span
+        >
+        <span class="text-[11px] text-primary font-bold animate-blink"
+          >▊</span
+        >
+        <span
+          class="text-[10px] text-on-surface-variant opacity-40 italic hidden sm:inline"
+          >(click to open terminal)</span
+        >
+      </div>
+
+      <a
+          href="/sudo"
+        title="Admin dashboard"
+        class="shrink-0 hidden items-center gap-1 px-3 h-7 border border-amber-600/50 text-[11px] text-amber-400 hover:bg-amber-600 hover:text-[#ffffff] transition-colors font-bold"
+      >
+        <span>[</span>
+        <span>SUDO</span>
+        <span>]</span>
+      </a>
+    </>
+  )}
+</header>
+
+{
+  !isSudo && (
+    <!-- Terminal Modal -->
+    <div
+      id="terminal-modal"
+      class="fixed inset-0 z-[60] hidden items-center justify-center pt-6"
+    >
+      <div
+        id="terminal-backdrop"
+        class="absolute inset-0 bg-black/70"
+      ></div>
+      <div
+        class="relative w-full max-w-2xl mx-4 border border-primary/30 bg-surface-container-low shadow-2xl"
+      >
+        <!-- Title bar -->
+        <div
+          class="flex items-center justify-between px-4 py-2 border-b border-primary/30"
+        >
+          <div class="flex gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-error/70"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-secondary/70"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-primary/70"></span>
+          </div>
+          <span class="text-[10px] text-on-surface-variant"
+            >term:~/archive</span
+          >
+          <button
+            id="modal-close"
+            class="text-[10px] text-on-surface-variant hover:text-primary cursor-pointer bg-transparent border-none font-mono px-1"
+          >
+            [X]
+          </button>
+        </div>
+
+        <!-- Output area -->
+        <div
+          id="terminal-output"
+          class="p-4 max-h-80 overflow-y-auto font-mono text-[12px] leading-relaxed space-y-0.5 min-h-[120px]"
+        ></div>
+
+        <!-- Input line -->
+        <div
+          class="border-t border-primary/30 px-4 py-2 flex items-center gap-2"
+        >
+          <span class="text-[11px] text-on-surface-variant shrink-0"
+            >guest@archive:~$</span
+          >
+          <input
+            id="terminal-input"
+            type="text"
+            class="flex-1 bg-transparent border-none outline-none text-[11px] text-primary font-mono"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<style>
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+  .animate-blink {
+    animation: blink 1s step-end infinite;
+  }
+</style>
+
+<script>
+  const trigger = document.getElementById("terminal-trigger");
+  const modal = document.getElementById("terminal-modal");
+  const backdrop = document.getElementById("terminal-backdrop");
+  const output = document.getElementById("terminal-output");
+  const input = document.getElementById("terminal-input");
+  const closeBtn = document.getElementById("modal-close");
+
+  if (trigger && modal) {
+    let commandHistory = [];
+    let historyIndex = -1;
+    let initialHelpShown = false;
+
+    function openModal() {
+      modal.classList.remove("hidden");
+      setTimeout(() => input.focus(), 50);
+      if (!initialHelpShown) {
+        initialHelpShown = true;
+        addOutput("Type 'help' for available commands.");
+      }
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+    }
+
+    trigger.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (backdrop) backdrop.addEventListener("click", closeModal);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeModal();
+        return;
+      }
+
+      if (modal.classList.contains("hidden")) return;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleCommand(input.value);
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (commandHistory.length > 0) {
+          historyIndex = Math.max(0, historyIndex - 1);
+          input.value = commandHistory[historyIndex];
+        }
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (historyIndex < commandHistory.length - 1) {
+          historyIndex++;
+          input.value = commandHistory[historyIndex];
+        } else {
+          historyIndex = commandHistory.length;
+          input.value = "";
+        }
+      }
+    });
+
+    function handleCommand(raw) {
+      const cmd = raw.trim();
+      addOutput(`guest@archive:~$ ${cmd}`);
+
+      const lowered = cmd.toLowerCase();
+      let handled = true;
+      let skipHistory = false;
+
+      if (lowered === "") {
+        handled = false;
+      } else if (lowered === "help") {
+        addOutput("Available commands:");
+        addOutput("  search &lt;q&gt;  — search posts & projects");
+        addOutput("  sudo        — admin dashboard");
+        addOutput("  clear       — clear terminal");
+        addOutput("  date        — show date/time");
+        addOutput("  whoami      — show user");
+        addOutput("  ls          — list pages");
+        addOutput("  neofetch    — system info");
+      } else if (lowered === "sudo") {
+        addOutput("[ SYSTEM ] elevating privileges...");
+        setTimeout(() => { window.location.href = "/sudo"; }, 400);
+      } else if (lowered === "clear") {
+        output.innerHTML = "";
+        skipHistory = true;
+      } else if (lowered === "date") {
+        addOutput(new Date().toString());
+      } else if (lowered === "whoami") {
+        addOutput("root@portfolio");
+      } else if (lowered === "ls") {
+        addOutput("./  ../  home/  blog/  projects/  about/  sudo/");
+      } else if (lowered === "neofetch") {
+        const uptime = Math.floor((Date.now() - performance.now()) / 1000);
+        addOutput("       _.---.._           root@portfolio");
+        addOutput("    .'        '.         -----------------");
+        addOutput("   /   TERMINAL  \\        OS: Static HTML");
+        addOutput("  /    PORTFOLIO  \\      Shell: bash v5.2");
+        addOutput(" /________________\\     Uptime: " + uptime + "s");
+        addOutput("                          Packages: 2 posts, 2 projects");
+      } else if (lowered.startsWith("search ")) {
+        applySearch(lowered.slice(7));
+      } else {
+        applySearch(lowered);
+        skipHistory = true;
+      }
+
+      if (handled && !skipHistory) {
+        commandHistory.push(cmd);
+      }
+      historyIndex = commandHistory.length;
+      input.value = "";
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function applySearch(query) {
+      const items = document.querySelectorAll(".search-item");
+      const noResults = document.getElementById("search-no-results");
+
+      if (items.length === 0) {
+        addOutput("[ SYSTEM ] no searchable content on this page.");
+        return;
+      }
+
+      let matchCount = 0;
+      items.forEach((item) => {
+        const title = (item.dataset.title || "").toLowerCase();
+        const desc = (item.dataset.description || "").toLowerCase();
+        const tags = (item.dataset.tags || "").toLowerCase();
+        const match =
+          !query ||
+          title.includes(query) ||
+          desc.includes(query) ||
+          tags.includes(query);
+        item.style.display = match ? "" : "none";
+        if (match) matchCount++;
+      });
+
+      if (noResults) {
+        if (query && matchCount === 0) {
+          noResults.textContent = `[ SYSTEM ] find: no results for "${query}"`;
+          noResults.classList.remove("hidden");
+        } else {
+          noResults.classList.add("hidden");
+        }
+      }
+
+      addOutput(`[ SYSTEM ] search "${query}": ${matchCount} result(s)`);
+    }
+
+    function addOutput(text) {
+      const line = document.createElement("div");
+      line.className = "text-on-surface";
+      line.textContent = text;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+  }
+</script>

@@ -16,7 +16,21 @@ const posts = (await getCollection("blog")).filter((p) => !p.data.draft);
     )}
 
     <div class="space-y-6">
-      {posts.map((post) => <PostCard post={post} />)}
+      {posts.map((post) => (
+        <div
+          class="search-item"
+          data-title={post.data.title}
+          data-description={post.data.description}
+          data-tags={(post.data.tags || []).join(" ")}
+        >
+          <PostCard post={post} />
+        </div>
+      ))}
     </div>
+
+    <div
+      id="search-no-results"
+      class="hidden text-on-surface-variant text-code-sm italic"
+    ></div>
   </div>
 </Layout>
