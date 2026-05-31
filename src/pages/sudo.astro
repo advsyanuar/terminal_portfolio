@@ -10,6 +10,25 @@ const stats = {
   projects: projects.length,
   featured: projects.filter((p) => p.data.featured).length,
 };
+
+const entryData = JSON.stringify({
+  blog: posts.map((p) => ({
+    slug: p.id,
+    title: p.data.title,
+    date: p.data.date instanceof Date
+      ? p.data.date.toISOString().slice(0, 10)
+      : String(p.data.date).slice(0, 10),
+    description: p.data.description,
+  })),
+  projects: projects.map((p) => ({
+    slug: p.id,
+    title: p.data.title,
+    date: p.data.date instanceof Date
+      ? p.data.date.toISOString().slice(0, 10)
+      : String(p.data.date).slice(0, 10),
+    description: p.data.description,
+  })),
+});
 ---
 
 <Layout
@@ -19,7 +38,7 @@ const stats = {
   headerPostCount={stats.posts}
   headerProjectCount={stats.projects}
 >
-  <div id="terminal-container" class="w-full h-full"></div>
+  <div id="terminal-container" class="w-full h-full" data-entries={entryData}></div>
 </Layout>
 
 <script>
@@ -69,199 +88,72 @@ const stats = {
   terminal.open(container);
   fitAddon.fit();
 
-  window.addEventListener("resize", () => {
-    fitAddon.fit();
-  });
-
   // Boot sequence
   const bootLines = [
     { text: "[ OK ] Initializing admin kernel...", delay: 150 },
     { text: "[ OK ] Mounting virtual filesystem...", delay: 300 },
-    { text: "[ OK ] Starting WASM runtime... [STUB — not connected]", delay: 500 },
-    { text: "[ WARN ] Running in local mode", delay: 700 },
-    { text: "", delay: 850 },
-    { text: "  Welcome to Portfolio Admin v0.1.0", delay: 1050 },
-    { text: "  Type 'help' for available commands.", delay: 1200 },
   ];
 
   let bootIndex = 0;
+  let rafId = null;
+  let wasm = null;
+
   function writeBoot() {
     if (bootIndex < bootLines.length) {
       terminal.writeln(bootLines[bootIndex].text);
       bootIndex++;
       setTimeout(writeBoot, bootLines[bootIndex - 1].delay);
     } else {
-      writePrompt();
+      terminal.write("[ .... ] Loading WASM runtime...");
+      initWasm();
+    }
+  }
+
+  async function initWasm() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const baseUrl = params.get("api") || window.location.origin;
+
+      const mod = await import("../admin/editor.js");
+      await mod.default();
+
+      mod.init(baseUrl, terminal.cols, terminal.rows);
+      const entryData = container?.dataset?.entries;
+      if (entryData) mod.load_entries(entryData);
+
+      wasm = mod;
+
+      terminal.write("\r[ OK ] WASM runtime loaded\n");
       terminal.focus();
+
+      rafId = requestAnimationFrame(function frame() {
+        try {
+          const output = wasm.tick();
+          if (output) terminal.write(output);
+        } catch (err) {
+          terminal.write(`\r\n\x1b[31m[WASM ERROR]\x1b[0m ${err.message}\n`);
+          return;
+        }
+        rafId = requestAnimationFrame(frame);
+      });
+    } catch (err) {
+      terminal.write(`\r[FAIL] ${err.message}\n`);
     }
-  }
-
-  let bootTimeout = setTimeout(writeBoot, 100);
-
-  // Command processor
-  let inputBuffer = "";
-  let commandHistory = [];
-  let historyIndex = -1;
-  let isProcessing = false;
-
-  /*
-   * ─── WASM Integration Point ──────────────────────────────────
-   *
-   * When the Rust Ratatui WASM module is ready, replace the local
-   * command processor with WASM-backed stdin/stdout:
-   *
-   *   1. terminal.onData() → pipe bytes to WASM stdin
-   *   2. WASM stdout callback → terminal.write()
-   *   3. Remove the local handleCommand / inputBuffer logic
-   *
-   * The FitAddon stays for terminal resizing.
-   * Example:
-   *
-   *   const wasm = await WebAssembly.instantiate(module, {
-   *     env: { putchar: (c) => terminal.write(String.fromCharCode(c)) }
-   *   });
-   *   terminal.onData((data) => wasm.instance.exports.stdin(data.charCodeAt(0)));
-   *
-   * ──────────────────────────────────────────────────────────────
-   */
-
-  function writePrompt() {
-    terminal.write("\r\nadmin@portfolio:~$ ");
-  }
-
-  function processCommand(cmd) {
-    const lowered = cmd.toLowerCase().trim();
-
-    if (lowered === "") return;
-
-    if (lowered === "help") {
-      terminal.writeln("Available commands:");
-      terminal.writeln("  stats       — show site statistics");
-      terminal.writeln("  clear       — clear terminal");
-      terminal.writeln("  reboot      — replay boot sequence");
-      terminal.writeln("  exit        — return to homepage");
-      terminal.writeln("  whoami      — show user");
-      terminal.writeln("  date        — show date/time");
-      terminal.writeln("  btw         — system info");
-      terminal.writeln("  help        — show this message");
-      return;
-    }
-
-    if (lowered === "stats") {
-      terminal.writeln(`posts:     ${stats.posts} (${stats.drafts} drafts)`);
-      terminal.writeln(`projects:  ${stats.projects} (${stats.featured} featured)`);
-      return;
-    }
-
-    if (lowered === "clear") {
-      terminal.clear();
-      return;
-    }
-
-    if (lowered === "reboot") {
-      terminal.clear();
-      bootIndex = 0;
-      isProcessing = true;
-      writeBoot();
-      return;
-    }
-
-    if (lowered === "exit") {
-      terminal.writeln("Logging out...");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
-      return;
-    }
-
-    if (lowered === "whoami") {
-      terminal.writeln("admin@portfolio");
-      return;
-    }
-
-    if (lowered === "date") {
-      terminal.writeln(new Date().toString());
-      return;
-    }
-
-    if (lowered === "btw") {
-      const uptime = Math.floor((Date.now() - performance.now()) / 1000);
-      terminal.writeln("       _.---.._           admin@portfolio");
-      terminal.writeln("    .'        '.         -----------------");
-      terminal.writeln("   /   TERMINAL  \\        OS: Static HTML");
-      terminal.writeln("  /    PORTFOLIO  \\      Shell: bash v5.2");
-      terminal.writeln(" /________________\\     Uptime: " + uptime + "s");
-      return;
-    }
-
-    terminal.writeln(`bash: ${cmd.trim().split(/\s+/)[0]}: command not found`);
   }
 
   terminal.onData((data) => {
-    if (bootIndex < bootLines.length) return;
+    if (!wasm) return;
 
-    const code = data.charCodeAt(0);
+    if (data === "\x1b[Z") { wasm.push_backtab(); return; }
+    if (data === "\x13")   { wasm.push_ctrl_s(); return; }
 
-    if (code === 13) {
-      // Enter
-      terminal.write("\r\n");
-      const cmd = inputBuffer;
-      if (cmd.trim()) {
-        commandHistory.push(cmd.trim());
-        historyIndex = commandHistory.length;
-      }
-      processCommand(cmd);
-      inputBuffer = "";
-      writePrompt();
-    } else if (code === 127) {
-      // Backspace
-      if (inputBuffer.length > 0) {
-        inputBuffer = inputBuffer.slice(0, -1);
-        terminal.write("\b \b");
-      }
-    } else if (code === 3) {
-      // Ctrl+C
-      terminal.write("^C\r\n");
-      inputBuffer = "";
-      writePrompt();
-    } else if (code === 27 && data.length >= 3) {
-      // Arrow keys (ESC sequences)
-      if (data === "\x1b[A") {
-        // Up
-        if (commandHistory.length > 0) {
-          if (historyIndex > 0) historyIndex--;
-          const prev = commandHistory[historyIndex];
-          // Clear current line
-          while (inputBuffer.length > 0) {
-            terminal.write("\b \b");
-            inputBuffer = inputBuffer.slice(0, -1);
-          }
-          inputBuffer = prev;
-          terminal.write(prev);
-        }
-      } else if (data === "\x1b[B") {
-        // Down
-        if (historyIndex < commandHistory.length - 1) {
-          historyIndex++;
-          while (inputBuffer.length > 0) {
-            terminal.write("\b \b");
-            inputBuffer = inputBuffer.slice(0, -1);
-          }
-          const next = commandHistory[historyIndex];
-          inputBuffer = next;
-          terminal.write(next);
-        } else {
-          historyIndex = commandHistory.length;
-          while (inputBuffer.length > 0) {
-            terminal.write("\b \b");
-            inputBuffer = inputBuffer.slice(0, -1);
-          }
-        }
-      }
-    } else if (data.length === 1 && code >= 32 && code <= 126) {
-      // Printable character
-      inputBuffer += data;
-      terminal.write(data);
-    }
+    wasm.push_key(data);
   });
+
+  window.addEventListener("resize", () => {
+    fitAddon.fit();
+    if (wasm) wasm.resize(terminal.cols, terminal.rows);
+  });
+
+  setTimeout(writeBoot, 100);
 </script>

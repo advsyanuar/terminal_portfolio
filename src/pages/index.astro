@@ -66,38 +66,169 @@ const projects = (await getCollection("projects")).filter((p) => p.data.featured
         <div class="w-2.5 h-2.5 rounded-full bg-primary/50"></div>
         <span class="text-[10px] ml-4 text-on-surface-variant opacity-60">root@archive:~/projects/pulse</span>
       </div>
-      <div class="flex-1 p-6 font-code-sm text-primary overflow-y-auto space-y-2">
-        <div class="flex gap-2">
-          <span class="opacity-50">root@archive:~$</span>
-          <span>ls -la ./projects</span>
-        </div>
-        <div class="grid grid-cols-4 opacity-70 gap-2">
-          <span>drwxr-xr-x</span>
-          <span>root</span>
-          <span>4096</span>
-          <span>cyber_pulse/</span>
-          <span>drwxr-xr-x</span>
-          <span>root</span>
-          <span>4096</span>
-          <span>neural_link/</span>
-          <span>-rw-r--r--</span>
-          <span>root</span>
-          <span>1242</span>
-          <span>README.md</span>
-        </div>
-        <div class="flex gap-2 mt-4">
-          <span class="opacity-50">root@archive:~$</span>
-          <span>./bin/monitor --live</span>
-        </div>
-        <div class="text-on-surface-variant italic">
-          [ SYSTEM ] Monitoring interface initialized...<br />
-          [ SYSTEM ] Listening on port 8080...
-        </div>
-        <div class="flex gap-2 items-center">
-          <span class="opacity-50">root@archive:~$</span>
-          <div class="w-2 h-4 bg-primary animate-pulse"></div>
-        </div>
-      </div>
+      <div id="home-terminal" class="flex-1 min-h-0"></div>
     </div>
   </div>
 </Layout>
+
+<script>
+  import { Terminal } from "xterm";
+  import { FitAddon } from "@xterm/addon-fit";
+  import "xterm/css/xterm.css";
+
+  const container = document.getElementById("home-terminal");
+  if (!container) throw new Error("no terminal container");
+
+  const theme = {
+    background: "#0a0a0c",
+    foreground: "#3b82f6",
+    cursor: "#3b82f6",
+    cursorAccent: "#0a0a0c",
+    selectionBackground: "#1e3a8a",
+    selectionInactiveBackground: "#1e293b",
+    black: "#0a0a0c",
+    red: "#ffb4ab",
+    green: "#3b82f6",
+    yellow: "#ffd393",
+    blue: "#3b82f6",
+    magenta: "#3b82f6",
+    cyan: "#3b82f6",
+    white: "#e3e2e2",
+    brightBlack: "#1e293b",
+    brightRed: "#ffb4ab",
+    brightGreen: "#3b82f6",
+    brightYellow: "#ffd393",
+    brightBlue: "#3b82f6",
+    brightMagenta: "#3b82f6",
+    brightCyan: "#3b82f6",
+    brightWhite: "#ffffff",
+  };
+
+  const term = new Terminal({
+    theme,
+    fontFamily: '"JetBrains Mono", monospace',
+    fontSize: 13,
+    cursorBlink: true,
+    cursorStyle: "underline",
+    allowProposedApi: true,
+    scrollback: 5000,
+    cols: 80,
+    rows: 12,
+    disableStdin: false,
+  });
+
+  const fitAddon = new FitAddon();
+  term.loadAddon(fitAddon);
+  term.open(container);
+  fitAddon.fit();
+
+  let mode = "repl";
+  let lineBuffer = "";
+  let wasm = null;
+  let rafId = null;
+
+  const COMMANDS = {
+    help: "Available commands: help, ls, whoami, pwd, date, uname -a, neofetch, clear, admin",
+    ls: "admin/\nprojects/\nblog/\nREADME.md\nabout.md",
+    whoami: "root",
+    pwd: "/root",
+    date: () => new Date().toString(),
+    "uname -a": "Linux archive 6.8.0-arch #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
+    neofetch: "root@archive\nOS: Arch Linux x86_64\nHost: Custom\nKernel: 6.8.0\nShell: bash 5.2\nTerminal: xterm-256color",
+    clear: () => { term.clear(); return null; },
+    admin: () => { bootAdmin(); return null; },
+  };
+
+  function writePrompt() {
+    term.write("\r\n\x1b[2mroot@archive:~$\x1b[0m ");
+  }
+
+  function handleCommand(input) {
+    const cmd = input.trim();
+    if (!cmd) { writePrompt(); return; }
+
+    const handler = COMMANDS[cmd];
+    if (handler) {
+      const result = typeof handler === "function" ? handler() : handler;
+      if (result !== null) {
+        term.writeln("\r\n" + result);
+        writePrompt();
+      }
+    } else {
+      term.writeln(`\r\n\x1b[31mcommand not found\x1b[0m: ${cmd}`);
+      writePrompt();
+    }
+  }
+
+  async function bootAdmin() {
+    mode = "tui";
+    term.writeln("\r\n[ .... ] Loading admin TUI...");
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const baseUrl = params.get("api") || window.location.origin;
+
+      const mod = await import("../admin/site_setting.js");
+      await mod.default();
+      mod.init(baseUrl, term.cols, term.rows);
+
+      term.write("\r[ \x1b[32mOK\x1b[0m ] Admin TUI loaded\n");
+      wasm = mod;
+      term.focus();
+
+      rafId = requestAnimationFrame(function frame() {
+        if (!wasm || !wasm.is_alive()) {
+          term.writeln("\r\n\x1b[33m[ Session terminated ]\x1b[0m");
+          mode = "repl";
+          writePrompt();
+          return;
+        }
+        const output = wasm.tick();
+        if (output) term.write(output);
+        rafId = requestAnimationFrame(frame);
+      });
+    } catch (err) {
+      term.writeln(`\r\x1b[31m[FAIL]\x1b[0m ${err.message}`);
+      mode = "repl";
+      writePrompt();
+    }
+  }
+
+  term.onData((data) => {
+    if (mode === "tui") {
+      if (!wasm) return;
+      if (data === "\x1b[Z") { wasm.push_backtab(); return; }
+      if (data === "\x13") { wasm.push_ctrl_s(); return; }
+      wasm.push_key(data);
+      return;
+    }
+
+    if (data === "\r") {
+      handleCommand(lineBuffer);
+      lineBuffer = "";
+    } else if (data === "\x7f") {
+      if (lineBuffer.length > 0) {
+        lineBuffer = lineBuffer.slice(0, -1);
+        term.write("\b \b");
+      }
+    } else if (data === "\x03") {
+      lineBuffer = "";
+      term.write("^C");
+      writePrompt();
+    } else {
+      lineBuffer += data;
+      term.write(data);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    fitAddon.fit();
+    if (wasm && mode === "tui") wasm.resize(term.cols, term.rows);
+  });
+
+  container.addEventListener("click", () => term.focus());
+
+  term.writeln("\x1b[2m[ OK ] Terminal emulator ready\x1b[0m");
+  writePrompt();
+  setTimeout(() => term.focus(), 50);
+</script>
