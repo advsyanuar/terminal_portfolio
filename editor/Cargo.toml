@@ -1,0 +1,35 @@
+[package]
+name = "editor"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "native"
+path = "src/bin/native.rs"
+
+[[bin]]
+name = "wasm"
+path = "src/bin/wasm.rs"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ratatui-core = "*"
+ratatui-widgets = "*"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+serde_yaml = "*"
+unicode-width = "*"
+unicode-segmentation = "*"
+chrono = { version = "*", features = ["serde"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+ratatui-crossterm = "*"
+crossterm = "*"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+console_error_panic_hook = "0.1"
+reqwest = { version = "0.12", default-features = false, features = ["json"] }

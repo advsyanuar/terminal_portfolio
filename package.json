@@ -5,7 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "npm run build:editor && astro build",
+    "build:editor": "cd editor && wasm-pack build --target web && cp pkg/editor.js pkg/editor_bg.wasm pkg/editor.d.ts pkg/editor_bg.wasm.d.ts ../src/admin/",
+    "build:wasm": "cd site_setting && wasm-pack build --target web && cp pkg/site_setting.js pkg/site_setting_bg.wasm pkg/site_setting.d.ts pkg/site_setting_bg.wasm.d.ts ../src/admin/",
+    "build:native": "cd editor && cargo build --bin native",
     "preview": "astro preview",
     "astro": "astro"
   },

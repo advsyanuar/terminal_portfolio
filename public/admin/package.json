@@ -1,0 +1,21 @@
+{
+  "name": "site_setting",
+  "type": "module",
+  "description": "Admin settings hub TUI compiled to WASM for Astro blogs",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anomalyco/site_setting"
+  },
+  "files": [
+    "site_setting_bg.wasm",
+    "site_setting.js",
+    "site_setting.d.ts"
+  ],
+  "main": "site_setting.js",
+  "types": "site_setting.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
